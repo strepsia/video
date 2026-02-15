@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import HeroSection from "@/components/video/HeroSection";
 import VideoCarousel from "@/components/video/VideoCarousel";
@@ -12,45 +12,61 @@ export default function HomePage() {
   const [rows, setRows] = useState<CategoryRow[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const supabase = createClient();
+
+      const { data: featuredData, error: featErr } = await supabase
+        .from("videos").select("*, category:categories(*)").eq("is_featured", true).eq("is_published", true)
+        .order("created_at", { ascending: false }).limit(1).single();
+      
+      if (featErr) console.warn("Featured error:", featErr.message);
+      if (featuredData) setFeatured(featuredData);
+
+      const { data: categories, error: catErr } = await supabase
+        .from("categories").select("*").neq("slug", "my-list").order("sort_order");
+
+      if (catErr) {
+        console.error("Categories error:", catErr.message);
+        setError(catErr.message);
+        setLoading(false);
+        return;
+      }
+
+      if (categories) {
+        const categoryRows: CategoryRow[] = [];
+        for (const cat of categories) {
+          const { data: vids } = await supabase
+            .from("videos").select("*").eq("category_id", cat.id).eq("is_published", true)
+            .order("created_at", { ascending: false }).limit(20);
+          if (vids && vids.length > 0) categoryRows.push({ category: cat, videos: vids });
+        }
+        setRows(categoryRows);
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: favs } = await supabase.from("user_favorites").select("video_id").eq("user_id", user.id);
+        if (favs) setFavoriteIds(new Set(favs.map((f: any) => f.video_id)));
+      }
+    } catch (err: any) {
+      console.error("Error loading home:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const { data: featuredData } = await supabase
-          .from("videos").select("*, category:categories(*)").eq("is_featured", true).eq("is_published", true)
-          .order("created_at", { ascending: false }).limit(1).single();
-        if (featuredData) setFeatured(featuredData);
-
-        const { data: categories } = await supabase
-          .from("categories").select("*").neq("slug", "my-list").order("sort_order");
-
-        if (categories) {
-          const categoryRows: CategoryRow[] = [];
-          for (const cat of categories) {
-            const { data: vids } = await supabase
-              .from("videos").select("*").eq("category_id", cat.id).eq("is_published", true)
-              .order("created_at", { ascending: false }).limit(20);
-            if (vids && vids.length > 0) categoryRows.push({ category: cat, videos: vids });
-          }
-          setRows(categoryRows);
-        }
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: favs } = await supabase.from("user_favorites").select("video_id").eq("user_id", user.id);
-          if (favs) setFavoriteIds(new Set(favs.map((f: any) => f.video_id)));
-        }
-      } catch (err) {
-        console.error("Error loading home:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchData();
-  }, [supabase]);
+  }, [fetchData]);
 
   const handleToggleFavorite = async (videoId: string) => {
+    const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     const newSet = new Set(favoriteIds);
@@ -75,6 +91,19 @@ export default function HomePage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center px-6">
+          <p className="text-red-400 font-medium">Error: {error}</p>
+          <button onClick={fetchData} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm cursor-pointer">
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       {featured && (
@@ -91,7 +120,7 @@ export default function HomePage() {
             <span className="text-3xl">🎬</span>
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Catalogo vacio</h2>
-          <p className="text-zinc-500 text-sm max-w-sm">No hay videos disponibles todavia. Si eres administrador, sube contenido desde el panel de control.</p>
+          <p className="text-zinc-500 text-sm max-w-sm">No hay videos disponibles todavia.</p>
         </div>
       )}
     </div>
