@@ -32,7 +32,9 @@ export default function DesktopNav() {
 
   const links = [
     { href: "/", label: "Inicio" },
-    { href: "/search", label: "Explorar" },
+    { href: "/sites", label: "Sitios" },
+    { href: "/categories", label: "Categorias" },
+    { href: "/actors", label: "Actores" },
     { href: "/my-list", label: "Mi Lista" },
   ];
 

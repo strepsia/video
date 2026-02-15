@@ -45,21 +45,36 @@ export interface UserFavorite {
   video?: Video;
 }
 
-export interface VideoWithUrl extends Video {
-  presigned_url: string;
-}
-
-export interface PresignedUrlResponse {
-  url: string;
-  expires_at: string;
-}
-
-export interface ApiError {
-  error: string;
-  status: number;
-}
-
 export interface CategoryRow {
   category: Category;
+  videos: Video[];
+}
+
+export interface Site {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url: string | null;
+  description: string | null;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface Actor {
+  id: string;
+  name: string;
+  slug: string;
+  photo_url: string | null;
+  bio: string | null;
+  created_at: string;
+}
+
+export interface SiteWithVideos {
+  site: Site;
+  videos: Video[];
+}
+
+export interface ActorWithVideos {
+  actor: Actor;
   videos: Video[];
 }
