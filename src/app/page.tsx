@@ -39,7 +39,7 @@ export default function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const { data: favs } = await supabase.from("user_favorites").select("video_id").eq("user_id", user.id);
-          if (favs) setFavoriteIds(new Set(favs.map((f) => f.video_id)));
+          if (favs) setFavoriteIds(new Set(favs.map((f: any) => f.video_id)));
         }
       } catch (err) {
         console.error("Error loading home:", err);
