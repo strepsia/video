@@ -1,9 +1,16 @@
 ﻿"use client";
+
 import { useAuth } from "@/context/AuthContext";
 import { User } from "lucide-react";
 
 export default function ProfilePage() {
   const { user, profile, signOut } = useAuth();
+
+  const handleSignOut = () => {
+    console.log("Sign out clicked");
+    signOut();
+  };
+
   return (
     <div className="pt-20 md:pt-24 px-5 md:px-12 max-w-lg mx-auto">
       <h1 className="text-2xl font-bold text-white mb-6">Perfil</h1>
@@ -18,7 +25,12 @@ export default function ProfilePage() {
           </div>
         </div>
         {user && (
-          <button onClick={signOut} className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-red-400 rounded-lg text-sm font-medium transition-colors">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            style={{ cursor: "pointer", position: "relative", zIndex: 50 }}
+            className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-red-400 rounded-lg text-sm font-medium transition-colors cursor-pointer"
+          >
             Cerrar Sesion
           </button>
         )}
