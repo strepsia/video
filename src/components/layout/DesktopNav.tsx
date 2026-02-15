@@ -10,7 +10,7 @@ export default function DesktopNav() {
   const [scrolled, setScrolled] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
-  const { user, profile, signOut } = useAuth();
+  const { user, profile } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -19,6 +19,16 @@ export default function DesktopNav() {
   }, []);
 
   if (pathname.startsWith("/watch/")) return null;
+
+  const handleSignOut = () => {
+    document.cookie.split(";").forEach((c) => {
+      const name = c.trim().split("=")[0];
+      if (name.includes("supabase") || name.includes("sb-")) {
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      }
+    });
+    window.location.href = "/";
+  };
 
   const links = [
     { href: "/", label: "Inicio" },
@@ -48,7 +58,7 @@ export default function DesktopNav() {
         </div>
         <div className="flex items-center gap-3">
           <div className="relative">
-            <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 text-zinc-400 hover:text-white transition-colors">
+            <button type="button" onClick={() => setSearchOpen(!searchOpen)} className="p-2 text-zinc-400 hover:text-white transition-colors cursor-pointer">
               <Search className="w-5 h-5" />
             </button>
             {searchOpen && (
@@ -59,13 +69,13 @@ export default function DesktopNav() {
               </div>
             )}
           </div>
-          <button className="p-2 text-zinc-400 hover:text-white transition-colors relative">
+          <button type="button" className="p-2 text-zinc-400 hover:text-white transition-colors relative cursor-pointer">
             <Bell className="w-5 h-5" />
             <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
           </button>
           {user ? (
             <div className="relative group/profile">
-              <button className="flex items-center gap-2 p-1 rounded-md hover:bg-white/5 transition-colors">
+              <button type="button" className="flex items-center gap-2 p-1 rounded-md hover:bg-white/5 transition-colors cursor-pointer">
                 <div className="w-8 h-8 rounded-md bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden">
                   {profile?.avatar_url ? <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" /> : (profile?.display_name || user.email)?.[0]?.toUpperCase() || "U"}
                 </div>
@@ -77,7 +87,9 @@ export default function DesktopNav() {
                   <p className="text-xs text-zinc-500 truncate">{user.email}</p>
                 </div>
                 <Link href="/profile" className="block px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-white/5">Mi Perfil</Link>
-                <button onClick={signOut} className="w-full text-left px-3 py-2 text-sm text-zinc-400 hover:text-red-400 hover:bg-white/5">Cerrar Sesion</button>
+                <button type="button" onClick={handleSignOut} className="w-full text-left px-3 py-2 text-sm text-zinc-400 hover:text-red-400 hover:bg-white/5 cursor-pointer">
+                  Cerrar Sesion
+                </button>
               </div>
             </div>
           ) : (

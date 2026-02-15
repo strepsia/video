@@ -4,11 +4,16 @@ import { useAuth } from "@/context/AuthContext";
 import { User } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, profile, signOut } = useAuth();
+  const { user, profile } = useAuth();
 
   const handleSignOut = () => {
-    console.log("Sign out clicked");
-    signOut();
+    document.cookie.split(";").forEach((c) => {
+      const name = c.trim().split("=")[0];
+      if (name.includes("supabase") || name.includes("sb-")) {
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+      }
+    });
+    window.location.href = "/";
   };
 
   return (
@@ -28,7 +33,6 @@ export default function ProfilePage() {
           <button
             type="button"
             onClick={handleSignOut}
-            style={{ cursor: "pointer", position: "relative", zIndex: 50 }}
             className="w-full py-2.5 bg-zinc-800 hover:bg-zinc-700 text-red-400 rounded-lg text-sm font-medium transition-colors cursor-pointer"
           >
             Cerrar Sesion
